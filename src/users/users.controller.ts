@@ -1,7 +1,6 @@
 import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { toObject } from '../../node_modules/moment/src/lib/moment/to-type';
 
 @Controller('users')
 export class UsersController {
