@@ -6,12 +6,14 @@ import { UsersModule } from './users/users.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonLoggerOption } from './utils/logger.config';
 import { LoggingMiddleware } from './middleware/logging.middleware';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     WinstonModule.forRoot(winstonLoggerOption),
     MongooseModule.forRoot(process.env.MONGODB_URI),
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
