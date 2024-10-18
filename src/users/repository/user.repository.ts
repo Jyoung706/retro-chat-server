@@ -7,13 +7,21 @@ import { User, UserDocument } from 'src/schemas/user.schema';
 export class UserRepository {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async findUserbyAccount(account: string): Promise<boolean> {
-    const accountCheck = await this.userModel.findOne({ account });
-    return accountCheck ? true : false;
+  async findUserbyAccount(account: string): Promise<User> {
+    const user = await this.userModel.findOne({ account }).lean();
+    return user;
   }
 
-  async create(user: Partial<User>): Promise<User> {
+  async createUser(user: Partial<User>): Promise<User> {
     const createdUser = new this.userModel(user);
     return (await createdUser.save()).toObject();
+  }
+
+  async updateUserRefreshToken(id: string, token: string): Promise<User> {
+    return await this.userModel.findByIdAndUpdate(
+      id,
+      { refresh_token: token },
+      { new: true, lean: true },
+    );
   }
 }
