@@ -1,4 +1,11 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  Post,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegistUserDto } from './dto/regist-user.dto';
 import { User } from 'src/schemas/user.schema';
@@ -21,7 +28,22 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@UserDecorator() user: Omit<User, 'password'>) {
+  login(@UserDecorator() user: Omit<User, 'password'>) {
     return this.authService.login(user);
+  }
+
+  @Post('refresh')
+  accessTokenRefresh(@Headers('authorization') authHeader: string) {
+    if (!authHeader) {
+      throw new UnauthorizedException('Refresh token is missing');
+    }
+
+    const refreshToken = authHeader.split(' ')[1];
+    if (!refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    const accessToken = this.authService.accessTokenRefresh(refreshToken);
+
+    return accessToken;
   }
 }

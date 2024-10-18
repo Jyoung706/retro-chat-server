@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserRepository } from 'src/users/repository/user.repository';
 import { RegistUserDto } from './dto/regist-user.dto';
 import { User } from 'src/schemas/user.schema';
@@ -7,7 +11,7 @@ import {
   TokenPayload,
   TokenResponse,
 } from 'src/common/interfaces/token.interface';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -16,7 +20,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  createToken(user: Partial<User>, isRefresh?: boolean) {
+  private createToken(
+    user: Omit<User, 'password'>,
+    isRefresh?: boolean,
+  ): TokenResponse {
     const payload: Omit<TokenPayload, 'iat'> = {
       sub: user._id.toString(),
       nickname: user.nickname,
@@ -24,12 +31,12 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET,
-      expiresIn: '1h',
+      expiresIn: '10s',
     });
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: '30d',
+      expiresIn: '1s',
     });
 
     if (isRefresh) {
@@ -68,7 +75,7 @@ export class AuthService {
       tokens.refresh_token,
     );
 
-    return newUser;
+    return { ...newUser, ...tokens };
   }
 
   async validateUser(
@@ -84,13 +91,55 @@ export class AuthService {
     return null;
   }
 
-  login(user: Omit<User, 'password'>): TokenResponse {
-    const payload = { nickname: user.nickname, sub: user._id };
+  login(
+    user: Omit<User, 'password'>,
+  ): Pick<User, '_id' | 'nickname'> & TokenResponse {
+    const tokens = this.createToken(user);
+
+    this.userRepository.updateUserRefreshToken(
+      user._id.toString(),
+      tokens.refresh_token,
+    );
 
     return {
-      access_token: this.jwtService.sign(payload, {
-        secret: process.env.JWT_SECRET,
-      }),
+      ...user,
+      ...tokens,
     };
+  }
+
+  async accessTokenRefresh(
+    refreshToken: string,
+  ): Promise<Pick<TokenResponse, 'access_token'>> {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+
+      const userId = payload.sub;
+      const userData = await this.userRepository.findUserbyObjectId(userId);
+
+      if (refreshToken !== userData.refresh_token) {
+        this.userRepository.updateRefreshTokenForExpire(userId);
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const accessToken = this.createToken(userData, true);
+
+      return accessToken;
+    } catch (error) {
+      const payload = this.jwtService.decode(refreshToken);
+      if (!payload) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      await this.userRepository.updateRefreshTokenForExpire(payload.userId);
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('refresh token expired');
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      throw new UnauthorizedException('Authentication faild try new login');
+    }
   }
 }

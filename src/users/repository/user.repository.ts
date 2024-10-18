@@ -12,6 +12,11 @@ export class UserRepository {
     return user;
   }
 
+  async findUserbyObjectId(id: string): Promise<User> {
+    const user = await this.userModel.findById(id).lean();
+    return user;
+  }
+
   async createUser(user: Partial<User>): Promise<User> {
     const createdUser = new this.userModel(user);
     return (await createdUser.save()).toObject();
@@ -23,5 +28,9 @@ export class UserRepository {
       { refresh_token: token },
       { new: true, lean: true },
     );
+  }
+
+  async updateRefreshTokenForExpire(id: string) {
+    await this.userModel.findByIdAndUpdate(id, { refresh_token: '' });
   }
 }

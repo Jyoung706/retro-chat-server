@@ -1,6 +1,6 @@
 export interface TokenResponse {
   access_token: string;
-  // refreshToken: string;
+  refresh_token?: string;
 }
 
 export interface TokenPayload {
