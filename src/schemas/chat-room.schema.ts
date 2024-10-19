@@ -1,6 +1,7 @@
 import { Document, SchemaTypes, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsBoolean, IsNumber, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsNumber, Length } from 'class-validator';
+import { ValidationMessages } from 'src/utils/validation.message';
 
 export type ChatRoomDocument = ChatRoom & Document;
 
@@ -12,12 +13,14 @@ export class ChatRoom {
   @Prop({ required: true })
   creator_id: Types.ObjectId;
 
-  @MaxLength(20)
-  @MinLength(1)
+  @Length(1, 20, { message: ValidationMessages.lengthMessage })
   @Prop({ required: true })
   room_name: string;
 
-  @IsNumber()
+  @IsNumber(
+    { allowNaN: false, allowInfinity: false },
+    { message: ValidationMessages.numberMessage },
+  )
   @Prop({ required: true })
   participants: number;
 

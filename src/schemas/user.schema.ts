@@ -1,6 +1,7 @@
 import { Document, SchemaTypes, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsString, Length } from 'class-validator';
+import { ValidationMessages } from 'src/utils/validation.message';
 
 export type UserDocument = UserModel & Document;
 
@@ -9,21 +10,21 @@ export class UserModel {
   @Prop({ type: SchemaTypes.ObjectId, auto: true })
   _id: Types.ObjectId;
 
-  @IsString({ message: 'account must be a string' })
-  @Length(2, 10, { message: 'account must be between 2 and 10 characters' })
+  @IsString({ message: ValidationMessages.stringMessage })
+  @Length(2, 10, { message: ValidationMessages.lengthMessage })
   @Prop({ required: true, unique: true })
   account: string;
 
-  @IsString({ message: 'nickname must be a string' })
-  @Length(2, 10, { message: 'nickname must be between 2 and 10 characters' })
+  @IsString({ message: ValidationMessages.stringMessage })
+  @Length(2, 10, { message: ValidationMessages.lengthMessage })
   @Prop({ required: true })
   nickname: string;
 
-  @IsString({ message: 'password must be a string' })
+  @IsString({ message: ValidationMessages.stringMessage })
   @Prop({ required: true })
   password: string;
 
-  @IsString({ message: 'refresh token must be a string' })
+  @IsString({ message: ValidationMessages.stringMessage })
   @Prop()
   refresh_token: string;
 }
