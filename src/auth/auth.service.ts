@@ -3,9 +3,9 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UserRepository } from 'src/users/repository/user.repository';
+import { UserRepository } from 'src/user/repository/user.repository';
 import { RegistUserDto } from './dto/regist-user.dto';
-import { User } from 'src/schemas/user.schema';
+import { UserModel } from 'src/schemas/user.schema';
 import * as bcrypt from 'bcryptjs';
 import {
   TokenPayload,
@@ -21,7 +21,7 @@ export class AuthService {
   ) {}
 
   private createToken(
-    user: Omit<User, 'password'>,
+    user: Omit<UserModel, 'password'>,
     isRefresh?: boolean,
   ): TokenResponse {
     const payload: Omit<TokenPayload, 'iat'> = {
@@ -51,7 +51,7 @@ export class AuthService {
     };
   }
 
-  async registUser(registUserDto: RegistUserDto): Promise<User> {
+  async registUser(registUserDto: RegistUserDto): Promise<UserModel> {
     const existingUser = await this.userRepository.findUserbyAccount(
       registUserDto.account,
     );
@@ -81,7 +81,7 @@ export class AuthService {
   async validateUser(
     account: string,
     password: string,
-  ): Promise<Omit<User, 'password'> | null> {
+  ): Promise<Omit<UserModel, 'password'> | null> {
     const user = await this.userRepository.findUserbyAccount(account);
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -92,8 +92,8 @@ export class AuthService {
   }
 
   login(
-    user: Omit<User, 'password'>,
-  ): Pick<User, '_id' | 'nickname'> & TokenResponse {
+    user: Omit<UserModel, 'password'>,
+  ): Pick<UserModel, '_id' | 'nickname'> & TokenResponse {
     const tokens = this.createToken(user);
 
     this.userRepository.updateUserRefreshToken(

@@ -1,11 +1,11 @@
 import { Document, SchemaTypes, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsString, Length, MaxLength, MinLength } from 'class-validator';
+import { IsString, Length } from 'class-validator';
 
-export type UserDocument = User & Document;
+export type UserDocument = UserModel & Document;
 
 @Schema({ versionKey: false, timestamps: true })
-export class User {
+export class UserModel {
   @Prop({ type: SchemaTypes.ObjectId, auto: true })
   _id: Types.ObjectId;
 
@@ -28,4 +28,4 @@ export class User {
   refresh_token: string;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(UserModel);

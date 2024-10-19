@@ -1,8 +1,8 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
 import { JwtAuthGuard } from './auth/guard/jwt.guard';
-import { User as UserDecorator } from './common/decorators/user.decorator';
-import { User } from './schemas/user.schema';
+import { User } from './common/decorators/user.decorator';
+import { UserModel } from './schemas/user.schema';
 
 @Controller()
 export class AppController {
@@ -10,7 +10,7 @@ export class AppController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  getHello(@UserDecorator() user: User): string {
+  getHello(@User() user: UserModel): string {
     return this.appService.getHello();
   }
 }
