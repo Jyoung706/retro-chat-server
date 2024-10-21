@@ -13,8 +13,6 @@ import { winstonLoggerOption } from './utils/logger.config';
 import { LoggingMiddleware } from './middleware/logging.middleware';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-
 @Module({
   imports: [
     WinstonModule.forRoot(winstonLoggerOption),
@@ -24,13 +22,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     ChatModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ClassSerializerInterceptor,
-    },
-  ],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
