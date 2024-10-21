@@ -1,22 +1,36 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UsersModule } from './user/users.module';
+import { UserModule } from './user/user.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonLoggerOption } from './utils/logger.config';
 import { LoggingMiddleware } from './middleware/logging.middleware';
 import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 @Module({
   imports: [
     WinstonModule.forRoot(winstonLoggerOption),
     MongooseModule.forRoot(process.env.MONGODB_URI),
-    UsersModule,
+    UserModule,
     AuthModule,
+    ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

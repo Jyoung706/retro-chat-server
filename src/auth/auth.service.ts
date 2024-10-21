@@ -11,7 +11,7 @@ import {
   TokenPayload,
   TokenResponse,
 } from 'src/common/interfaces/token.interface';
-import { JwtService, TokenExpiredError } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -31,12 +31,12 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET,
-      expiresIn: '10s',
+      expiresIn: '30m',
     });
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: '1s',
+      expiresIn: '30d',
     });
 
     if (isRefresh) {
