@@ -1,12 +1,18 @@
 import { Document, SchemaTypes, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsBoolean, IsNumber, Length } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  Length,
+  ValidateIf,
+} from 'class-validator';
 import { ValidationMessages } from 'src/utils/validation.message';
 
-export type ChatRoomDocument = ChatRoom & Document;
+export type ChatRoomDocument = ChatRoomModel & Document;
 
 @Schema({ versionKey: false, timestamps: true })
-export class ChatRoom {
+export class ChatRoomModel {
   @Prop({ type: SchemaTypes.ObjectId, auto: true })
   _id: Types.ObjectId;
 
@@ -17,16 +23,30 @@ export class ChatRoom {
   @Prop({ required: true })
   room_name: string;
 
-  @IsNumber(
-    { allowNaN: false, allowInfinity: false },
-    { message: ValidationMessages.numberMessage },
-  )
-  @Prop({ required: true })
-  participants: number;
+  @Prop([
+    {
+      user: { type: SchemaTypes.ObjectId, ref: 'User' },
+      joinedAt: { type: Date, default: Date.now },
+    },
+  ])
+  participants: { user: Types.ObjectId; joinedAt: Date }[];
 
   @IsBoolean()
   @Prop({ required: true, default: false })
   isPublic: boolean;
+
+  @IsOptional()
+  @ValidateIf((o) => o.isPublic === true)
+  @IsString({ message: ValidationMessages.stringMessage })
+  @Prop()
+  password?: string;
 }
 
-export const ChatRoomSchema = SchemaFactory.createForClass(ChatRoom);
+export const ChatRoomSchema = SchemaFactory.createForClass(ChatRoomModel);
+
+ChatRoomSchema.pre('validate', function (next) {
+  if (this.isPublic && !this.password) {
+    this.invalidate('password', 'Password is required for public rooms');
+  }
+  next();
+});

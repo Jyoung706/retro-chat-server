@@ -1,26 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { ChatRoomDocument, ChatRoomModel } from 'src/schemas/chat-room.schema';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
 
 @Injectable()
 export class ChatService {
-  create(createChatDto: CreateChatDto) {
-    return 'This action adds a new chat';
-  }
+  constructor(
+    @InjectModel(ChatRoomModel.name)
+    private readonly chatRoomModel: Model<ChatRoomDocument>,
+  ) {}
 
-  findAll() {
-    return `This action returns all chat`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} chat`;
-  }
-
-  update(id: number, updateChatDto: UpdateChatDto) {
-    return `This action updates a #${id} chat`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} chat`;
+  async createChatRoom(creatorId: string, createChatDto: CreateChatDto) {
+    const newChatRoom = new this.chatRoomModel({
+      creator_id: creatorId,
+      ...createChatDto,
+    });
+    return (await newChatRoom.save()).toObject();
   }
 }
