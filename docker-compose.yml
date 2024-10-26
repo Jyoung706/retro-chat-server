@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: dev.Dockerfile
+    image: retro-chat-server-backend:dev
     ports:
       - '${PORT}:${PORT}'
     env_file:

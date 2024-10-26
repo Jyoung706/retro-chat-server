@@ -11,7 +11,7 @@ import {
   TokenPayload,
   TokenResponse,
 } from 'src/common/interfaces/token.interface';
-import { JwtService } from '@nestjs/jwt';
+import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -140,6 +140,23 @@ export class AuthService {
       }
 
       throw new UnauthorizedException('Authentication faild try new login');
+    }
+  }
+
+  async verifyToken(token: string): Promise<TokenPayload> {
+    try {
+      return await this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+    } catch (e) {
+      if (e instanceof TokenExpiredError) {
+        throw new UnauthorizedException('Token has expired');
+      }
+
+      if (e instanceof JsonWebTokenError) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      throw new UnauthorizedException('Unauthorized');
     }
   }
 }

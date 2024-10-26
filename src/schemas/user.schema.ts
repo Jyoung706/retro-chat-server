@@ -5,7 +5,7 @@ import { ValidationMessages } from 'src/utils/validation.message';
 
 export type UserDocument = UserModel & Document;
 
-@Schema({ versionKey: false, timestamps: true })
+@Schema({ collection: 'Users', versionKey: false, timestamps: true })
 export class UserModel {
   @Prop({ type: SchemaTypes.ObjectId, auto: true })
   _id: Types.ObjectId;

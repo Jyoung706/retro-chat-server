@@ -11,7 +11,7 @@ import { ValidationMessages } from 'src/utils/validation.message';
 
 export type ChatRoomDocument = ChatRoomModel & Document;
 
-@Schema({ versionKey: false, timestamps: true })
+@Schema({ collection: 'Chat_rooms', versionKey: false, timestamps: true })
 export class ChatRoomModel {
   @Prop({ type: SchemaTypes.ObjectId, auto: true })
   _id: Types.ObjectId;
@@ -25,6 +25,7 @@ export class ChatRoomModel {
 
   @Prop([
     {
+      _id: false,
       user: { type: SchemaTypes.ObjectId, ref: 'User' },
       joinedAt: { type: Date, default: Date.now },
     },
