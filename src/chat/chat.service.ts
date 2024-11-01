@@ -1,19 +1,23 @@
 import {
+  BadRequestException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ChatRoomDocument, ChatRoomModel } from 'src/schemas/chat-room.schema';
-import { CreateChatDto } from './dto/create-chat.dto';
+import { CreateChatDto } from './dto/create-room.dto';
 import { EnterRoomDto } from './dto/enter-room.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { MessageDocument, MessageModel } from 'src/schemas/message.schema';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel(ChatRoomModel.name)
     private readonly chatRoomModel: Model<ChatRoomDocument>,
+    @InjectModel(MessageModel.name)
+    private readonly messageModel: Model<MessageDocument>,
   ) {}
 
   async checkRoomExist(roomId: string): Promise<ChatRoomModel | null> {
@@ -50,13 +54,20 @@ export class ChatService {
   ): Promise<Partial<ChatRoomModel>> {
     const room = await this.checkRoomExist(enterRoomDto._id.toString());
 
+    if (!room) {
+      throw new BadRequestException('Not Exist Room');
+    }
+
+    const isAlreadyParticipants = room.participants.some(
+      (participants) => participants.user.toString() === userId,
+    );
+
+    if (isAlreadyParticipants) {
+      throw new BadRequestException('User is already in this room');
+    }
+
     if (!room.isPublic) {
-      if (!enterRoomDto.password) {
-        throw new UnauthorizedException(
-          'Password is required for private rooms',
-        );
-      }
-      if (enterRoomDto.password !== room.password) {
+      if (!enterRoomDto.password || enterRoomDto.password !== room.password) {
         throw new UnauthorizedException('Invalid password');
       }
     }
@@ -73,7 +84,43 @@ export class ChatService {
       },
       { new: true, lean: true, select: '-password' },
     );
-    // 방 참가 메세지 보내기
     return updateRoom;
+  }
+
+  async findUserRooms(userId: string): Promise<ChatRoomModel> {
+    return await this.chatRoomModel
+      .findOne({
+        'participants.user': userId,
+      })
+      .lean();
+  }
+
+  async leaveRoom(userId: string, roomId: string) {
+    const updatedRoom = await this.chatRoomModel.findByIdAndUpdate(
+      roomId,
+      {
+        $pull: { participants: userId },
+      },
+      { new: true, lean: true },
+    );
+
+    if (updatedRoom && updatedRoom.participants.length === 0) {
+      await this.chatRoomModel.findByIdAndDelete(roomId);
+      return null;
+    }
+
+    return updatedRoom;
+  }
+
+  async createMessage(
+    createMessageDto: CreateMessageDto,
+    senderId?: string | Types.ObjectId,
+  ) {
+    const newMessage = new this.messageModel({
+      ...createMessageDto,
+      sender_id: senderId,
+    });
+
+    return (await newMessage.save()).toObject();
   }
 }

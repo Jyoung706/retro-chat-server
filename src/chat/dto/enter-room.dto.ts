@@ -9,7 +9,7 @@ export class EnterRoomDto extends PickType(ChatRoomModel, ['_id', 'password']) {
   @Expose({ name: 'roomId' })
   _id: Types.ObjectId;
 
-  @ValidateIf((o) => o.isPublic === true)
+  @ValidateIf((o) => o.isPublic === false)
   @IsString()
   @IsOptional()
   password?: string;

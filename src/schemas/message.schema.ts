@@ -1,7 +1,8 @@
 import { Document, SchemaTypes, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsString } from 'class-validator';
+import { IsBoolean, IsString } from 'class-validator';
 import { ValidationMessages } from 'src/utils/validation.message';
+import { Optional } from '@nestjs/common';
 
 export type MessageDocument = MessageModel & Document;
 
@@ -10,15 +11,26 @@ export class MessageModel {
   @Prop({ type: SchemaTypes.ObjectId, auto: true })
   _id: Types.ObjectId;
 
+  @IsString()
   @Prop({ required: true, ref: 'ChatRooms' })
   room_id: Types.ObjectId;
 
-  @Prop({ required: true })
-  sender_id: Types.ObjectId;
+  @IsString()
+  @Prop({
+    type: SchemaTypes.Mixed,
+    ref: 'User',
+    required: true,
+  })
+  @Optional()
+  sender_id: Types.ObjectId | 'System';
 
   @IsString({ message: ValidationMessages.lengthMessage })
   @Prop({ required: true })
   message: string;
+
+  @IsBoolean({ message: ValidationMessages.booleanMessage })
+  @Prop({ required: true, default: false })
+  isSystem: boolean;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(MessageModel);

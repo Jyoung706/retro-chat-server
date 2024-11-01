@@ -3,7 +3,7 @@ import { ChatService } from './chat.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { User } from 'src/common/decorators/user.decorator';
 import { TokenPayload } from 'src/common/interfaces/token.interface';
-import { CreateChatDto } from './dto/create-chat.dto';
+import { CreateChatDto } from './dto/create-room.dto';
 import { EnterRoomDto } from './dto/enter-room.dto';
 import { ChatGateway } from './chat.gateway';
 
@@ -20,7 +20,9 @@ export class ChatController {
     @User() user: TokenPayload,
     @Body() chatRoomData: CreateChatDto,
   ) {
-    return await this.chatService.createChatRoom(user.sub, chatRoomData);
+    const room = await this.chatService.createChatRoom(user.sub, chatRoomData);
+    await this.chatGateway.handleRoomJoin(user, room._id.toString());
+    return room;
   }
 
   @Get('room/list')
@@ -29,14 +31,5 @@ export class ChatController {
     @Query('limit') limit: number,
   ) {
     return await this.chatService.getChatRoomList(page, limit);
-  }
-
-  @Post('room/enter')
-  async enterRoom(
-    @User() user: TokenPayload,
-    @Body() enterRoomDto: EnterRoomDto,
-  ) {
-    const room = await this.chatService.enterRoom(user.sub, enterRoomDto);
-    return room;
   }
 }
