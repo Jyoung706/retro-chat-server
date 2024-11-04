@@ -9,10 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { ChatService } from './chat.service';
 import { Server, Socket } from 'socket.io';
-import {
-  TokenPayload,
-  TokenResponse,
-} from 'src/common/interfaces/token.interface';
+import { TokenPayload } from 'src/common/interfaces/token.interface';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { Inject, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
@@ -120,7 +117,7 @@ export class ChatGateway implements OnGatewayConnection {
 
     return {
       success: true,
-      message: createMessageDto,
+      data: createMessageDto,
     };
   }
 }
