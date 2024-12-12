@@ -3,6 +3,7 @@ import {
   Controller,
   Headers,
   Post,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { RegistUserDto } from './dto/regist-user.dto';
 import { UserModel } from 'src/schemas/user.schema';
 import { LocalAuthGuard } from './guard/local.guard';
 import { User as UserDecorator } from '../common/decorators/user.decorator';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -19,10 +21,19 @@ export class AuthController {
   @Post('regist')
   async registUser(
     @Body() registUserDto: RegistUserDto,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<Partial<UserModel>> {
     const newUser = await this.authService.registUser(registUserDto);
 
-    const { password, account, ...user } = newUser;
+    const { password, account, refresh_token, ...user } = newUser;
+
+    response.cookie('rt', refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+
     return user;
   }
 
