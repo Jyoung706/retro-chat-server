@@ -1,6 +1,6 @@
 export interface ResponseFormat<T> {
   success: boolean;
-  data: T;
+  result: T;
   error?: string;
   message: string;
 }

@@ -18,7 +18,7 @@ export class ResponseInterCeptor<T>
     return next.handle().pipe(
       map((data) => ({
         success: true,
-        data,
+        result: data,
         message: null,
         error: null,
       })),
