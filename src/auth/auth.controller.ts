@@ -13,6 +13,7 @@ import { UserModel } from 'src/schemas/user.schema';
 import { LocalAuthGuard } from './guard/local.guard';
 import { User as UserDecorator } from '../common/decorators/user.decorator';
 import { Request, Response } from 'express';
+import { cookieOption } from 'src/utils/cookie-option';
 
 @Controller('auth')
 export class AuthController {
@@ -27,20 +28,22 @@ export class AuthController {
 
     const { password, account, refresh_token, ...user } = newUser;
 
-    response.cookie('rt', refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    response.cookie('rt', refresh_token, cookieOption);
 
     return user;
   }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  login(@UserDecorator() user: Omit<UserModel, 'password'>) {
-    return this.authService.login(user);
+  login(
+    @UserDecorator() user: Omit<UserModel, 'password'>,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const userData = this.authService.login(user);
+
+    response.cookie('rt', userData.refresh_token, cookieOption);
+
+    return userData;
   }
 
   @Post('refresh')
