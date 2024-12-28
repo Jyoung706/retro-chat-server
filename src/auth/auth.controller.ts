@@ -1,8 +1,8 @@
 import {
   Body,
   Controller,
-  Headers,
   Post,
+  Req,
   Res,
   UnauthorizedException,
   UseGuards,
@@ -12,7 +12,7 @@ import { RegistUserDto } from './dto/regist-user.dto';
 import { UserModel } from 'src/schemas/user.schema';
 import { LocalAuthGuard } from './guard/local.guard';
 import { User as UserDecorator } from '../common/decorators/user.decorator';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -44,15 +44,13 @@ export class AuthController {
   }
 
   @Post('refresh')
-  accessTokenRefresh(@Headers('authorization') authHeader: string) {
-    if (!authHeader) {
+  accessTokenRefresh(@Req() request: Request) {
+    const refreshToken = request.cookies['rt'];
+    console.log(refreshToken);
+    if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is missing');
     }
 
-    const refreshToken = authHeader.split(' ')[1];
-    if (!refreshToken) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
     const accessToken = this.authService.accessTokenRefresh(refreshToken);
 
     return accessToken;
