@@ -37,7 +37,7 @@ export class ChatRoomModel {
   isPublic: boolean;
 
   @IsOptional()
-  @ValidateIf((o) => o.isPublic === true)
+  @ValidateIf((o) => o.isPublic === false)
   @IsString({ message: ValidationMessages.stringMessage })
   @Prop()
   password?: string;
@@ -46,7 +46,7 @@ export class ChatRoomModel {
 export const ChatRoomSchema = SchemaFactory.createForClass(ChatRoomModel);
 
 ChatRoomSchema.pre('validate', function (next) {
-  if (this.isPublic && !this.password) {
+  if (!this.isPublic && !this.password) {
     this.invalidate('password', 'Password is required for public rooms');
   }
   next();
