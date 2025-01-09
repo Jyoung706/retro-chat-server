@@ -99,7 +99,11 @@ export class ChatService {
     const updatedRoom = await this.chatRoomModel.findByIdAndUpdate(
       roomId,
       {
-        $pull: { participants: userId },
+        $pull: {
+          participants: {
+            user: new Types.ObjectId(userId),
+          },
+        },
       },
       { new: true, lean: true },
     );

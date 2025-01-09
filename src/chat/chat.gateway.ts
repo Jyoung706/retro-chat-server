@@ -111,6 +111,11 @@ export class ChatGateway implements OnGatewayConnection {
     @MessageBody() createMessageDto: CreateMessageDto,
     @ConnectedSocket() socket: AuthenticatedSocket,
   ) {
+    // await this.chatService.createMessage(
+    //   createMessageDto,
+    //   createMessageDto.sender_id,
+    // );
+
     socket
       .to(createMessageDto.room_id.toString())
       .emit('send_message', createMessageDto.message);
