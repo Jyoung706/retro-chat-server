@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { User } from 'src/common/decorators/user.decorator';
@@ -31,5 +39,10 @@ export class ChatController {
     @Query('limit') limit: number,
   ) {
     return await this.chatService.getChatRoomList(page, limit);
+  }
+
+  @Get('room/detail/:roomId')
+  async roomDetail(@Param('roomId') roomId: string) {
+    return await this.chatService.roomDetail(roomId);
   }
 }

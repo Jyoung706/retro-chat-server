@@ -127,4 +127,8 @@ export class ChatService {
 
     return (await newMessage.save()).toObject();
   }
+
+  async roomDetail(roomId: string) {
+    return await this.chatRoomModel.findById(roomId).lean();
+  }
 }
