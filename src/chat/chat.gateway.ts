@@ -12,13 +12,20 @@ import { Server, Socket } from 'socket.io';
 import { TokenPayload } from 'src/common/interfaces/token.interface';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateMessageDto } from './dto/create-message.dto';
-import { Inject, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Inject,
+  Logger,
+  UseFilters,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { SocketExceptionFilter } from 'src/common/exception-filter/socket-exception.filter';
 import { validationOption } from 'src/common/options/validation-pipe.option';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { EnterRoomDto } from './dto/enter-room.dto';
 import { AuthenticatedSocket } from 'src/common/interfaces/socket.interface';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @UsePipes(new ValidationPipe(validationOption))
 @UseFilters(SocketExceptionFilter)
@@ -26,34 +33,43 @@ import { AuthenticatedSocket } from 'src/common/interfaces/socket.interface';
   namespace: 'chats',
 })
 export class ChatGateway implements OnGatewayConnection {
+  @WebSocketServer()
+  server: Server;
+
   constructor(
     private readonly chatService: ChatService,
     private readonly authService: AuthService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
   ) {}
 
-  @WebSocketServer()
-  server: Server;
-
   async handleConnection(socket: Socket) {
-    const headers = socket.handshake.headers;
+    this.logger.log({
+      message: `클라이언트 연결됨 - socket id: ${socket.id}`,
+      socketId: socket.id,
+      timestamp: new Date().toISOString(),
+    });
+    const token = socket.handshake.auth.token;
 
-    const rawToken = headers['authorization'];
-
-    if (!rawToken) {
+    if (!token) {
       throw new WsException('There is no token');
     }
 
     try {
-      const accessToken = rawToken.split(' ')[1];
+      const accessToken = token.split(' ')[1];
       const payload = await this.authService.verifyToken(accessToken);
+      console.log(this.server.engine.clientsCount);
 
       socket.data.user = payload;
       await this.cacheManager.set(payload.sub, socket.id);
     } catch (e) {
+      socket.emit('exception', {
+        status: 'error',
+        message: 'Invalid Token',
+      });
       socket.disconnect();
-      throw new WsException('Invalid Token');
     }
   }
 

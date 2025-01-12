@@ -49,7 +49,6 @@ export class AuthController {
   @Post('refresh')
   accessTokenRefresh(@Req() request: Request) {
     const refreshToken = request.cookies['rt'];
-    console.log(refreshToken);
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is missing');
     }
