@@ -141,4 +141,31 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       data: createMessageDto,
     };
   }
+
+  @SubscribeMessage('leave_room')
+  async leaveRoom(
+    @MessageBody() roomId: string,
+    @ConnectedSocket() socket: AuthenticatedSocket,
+  ) {
+    try {
+      const result = await this.chatService.leaveRoom(
+        socket.data.user.sub,
+        roomId,
+      );
+      if (result) {
+        socket.leave(roomId);
+        const systemMessage = {
+          roomId,
+          senderId: 'System',
+          message: `${socket.data.user.nickname}님이 채팅방을 나갔습니다.`,
+          isSystem: true,
+        };
+        this.server.to(roomId).emit('send_message', systemMessage);
+      } else {
+        return;
+      }
+    } catch (e) {
+      this.logger.error(e);
+    }
+  }
 }
