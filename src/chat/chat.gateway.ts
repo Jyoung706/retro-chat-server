@@ -6,6 +6,7 @@ import {
   ConnectedSocket,
   WsException,
   WebSocketServer,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { ChatService } from './chat.service';
 import { Server, Socket } from 'socket.io';
@@ -32,7 +33,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 @WebSocketGateway({
   namespace: 'chats',
 })
-export class ChatGateway implements OnGatewayConnection {
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -46,11 +47,6 @@ export class ChatGateway implements OnGatewayConnection {
   ) {}
 
   async handleConnection(socket: Socket) {
-    this.logger.log({
-      message: `클라이언트 연결됨 - socket id: ${socket.id}`,
-      socketId: socket.id,
-      timestamp: new Date().toISOString(),
-    });
     const token = socket.handshake.auth.token;
 
     if (!token) {
@@ -60,8 +56,6 @@ export class ChatGateway implements OnGatewayConnection {
     try {
       const accessToken = token.split(' ')[1];
       const payload = await this.authService.verifyToken(accessToken);
-      console.log(this.server.engine.clientsCount);
-
       socket.data.user = payload;
       await this.cacheManager.set(payload.sub, socket.id);
     } catch (e) {
@@ -74,12 +68,18 @@ export class ChatGateway implements OnGatewayConnection {
   }
 
   async handleDisconnect(socket: AuthenticatedSocket) {
-    if (socket.data.user) {
-      const userId = socket.data.user.sub;
-      await this.cacheManager.del(userId);
+    try {
+      if (socket.data.user) {
+        const userId = socket.data.user.sub;
+        await this.cacheManager.del(userId);
 
-      const room = await this.chatService.findUserRooms(userId);
-      await this.chatService.leaveRoom(userId, room._id.toString());
+        const room = await this.chatService.findUserRooms(userId);
+        if (room) {
+          await this.chatService.leaveRoom(userId, room._id.toString());
+        }
+      }
+    } catch (e) {
+      this.logger.error(e);
     }
   }
 

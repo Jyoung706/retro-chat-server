@@ -45,4 +45,12 @@ export class ChatController {
   async roomDetail(@Param('roomId') roomId: string) {
     return await this.chatService.roomDetail(roomId);
   }
+
+  @Post('room/enter')
+  async enterRoom(
+    @User() user: TokenPayload,
+    @Body() enterRoomDto: EnterRoomDto,
+  ) {
+    return await this.chatService.enterRoom(user.sub, enterRoomDto);
+  }
 }
