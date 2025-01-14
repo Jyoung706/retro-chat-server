@@ -27,6 +27,7 @@ import { Cache } from 'cache-manager';
 import { EnterRoomDto } from './dto/enter-room.dto';
 import { AuthenticatedSocket } from 'src/common/interfaces/socket.interface';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { v4 as uuidv4 } from 'uuid';
 
 @UsePipes(new ValidationPipe(validationOption))
 @UseFilters(SocketExceptionFilter)
@@ -131,14 +132,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     //   createMessageDto,
     //   createMessageDto.sender_id,
     // );
-
+    const messageForm = {
+      ...createMessageDto,
+      sender_id: socket.data.user.sub,
+      id: uuidv4(),
+    };
     socket
-      .to(createMessageDto.room_id.toString())
-      .emit('send_message', createMessageDto.message);
+      .to(messageForm.room_id.toString())
+      .emit('receive_message', messageForm);
 
     return {
       success: true,
-      data: createMessageDto,
+      data: messageForm,
     };
   }
 
@@ -160,7 +165,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           message: `${socket.data.user.nickname}님이 채팅방을 나갔습니다.`,
           isSystem: true,
         };
-        this.server.to(roomId).emit('send_message', systemMessage);
+        this.server.to(roomId).emit('receive_message', systemMessage);
       } else {
         return;
       }
