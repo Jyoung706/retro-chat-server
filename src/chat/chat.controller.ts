@@ -51,6 +51,8 @@ export class ChatController {
     @User() user: TokenPayload,
     @Body() enterRoomDto: EnterRoomDto,
   ) {
-    return await this.chatService.enterRoom(user.sub, enterRoomDto);
+    const enterRoom = await this.chatService.enterRoom(user.sub, enterRoomDto);
+    await this.chatGateway.handleRoomJoin(user, enterRoom._id.toString());
+    return enterRoom;
   }
 }
