@@ -10,6 +10,8 @@ import { CreateChatDto } from './dto/create-room.dto';
 import { EnterRoomDto } from './dto/enter-room.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { MessageDocument, MessageModel } from 'src/schemas/message.schema';
+import { ChatGateway } from './chat.gateway';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ChatService {
@@ -18,6 +20,7 @@ export class ChatService {
     private readonly chatRoomModel: Model<ChatRoomDocument>,
     @InjectModel(MessageModel.name)
     private readonly messageModel: Model<MessageDocument>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async checkRoomExist(roomId: string): Promise<ChatRoomModel | null> {
@@ -102,6 +105,7 @@ export class ChatService {
 
     if (updatedRoom && updatedRoom.participants.length === 0) {
       await this.chatRoomModel.findByIdAndDelete(roomId);
+      this.eventEmitter.emit('room_deleted', roomId);
       return null;
     }
 

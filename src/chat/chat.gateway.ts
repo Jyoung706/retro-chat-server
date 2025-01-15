@@ -28,6 +28,8 @@ import { EnterRoomDto } from './dto/enter-room.dto';
 import { AuthenticatedSocket } from 'src/common/interfaces/socket.interface';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { v4 as uuidv4 } from 'uuid';
+import { OnEvent } from '@nestjs/event-emitter';
+import { ChatRoomModel } from 'src/schemas/chat-room.schema';
 
 @UsePipes(new ValidationPipe(validationOption))
 @UseFilters(SocketExceptionFilter)
@@ -188,5 +190,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (e) {
       this.logger.error(e);
     }
+  }
+
+  @OnEvent('room_created')
+  async handleRoomCreated(room: ChatRoomModel) {
+    console.log('room_created', room);
+    this.server.emit('room_created', room);
+  }
+
+  @OnEvent('room_deleted')
+  async handleRoomDeleted(roomId: string) {
+    this.server.emit('room_deleted', roomId);
   }
 }

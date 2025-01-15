@@ -9,10 +9,12 @@ import { LoggingMiddleware } from './middleware/logging.middleware';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
   imports: [
     WinstonModule.forRoot(winstonLoggerOption),
     MongooseModule.forRoot(process.env.MONGODB_URI),
+    EventEmitterModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
       ttl: 0,

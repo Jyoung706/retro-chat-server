@@ -14,13 +14,14 @@ import { TokenPayload } from 'src/common/interfaces/token.interface';
 import { CreateChatDto } from './dto/create-room.dto';
 import { EnterRoomDto } from './dto/enter-room.dto';
 import { ChatGateway } from './chat.gateway';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class ChatController {
   constructor(
     private readonly chatService: ChatService,
-    private readonly chatGateway: ChatGateway,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Post('new')
@@ -29,6 +30,7 @@ export class ChatController {
     @Body() chatRoomData: CreateChatDto,
   ) {
     const room = await this.chatService.createChatRoom(user.sub, chatRoomData);
+    this.eventEmitter.emit('room_created', room);
     return room;
   }
 
