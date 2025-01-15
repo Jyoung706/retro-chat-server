@@ -91,13 +91,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleRoomJoin(user: TokenPayload, roomId: string) {
     const socketId = await this.getSocketId(user.sub);
     this.server.in(socketId).socketsJoin(roomId);
+
     const systemMessage = {
+      id: uuidv4(),
       roomId,
       senderId: 'System',
+      nickname: 'System',
       message: `${user.nickname} 님이 채팅방에 참가했습니다.`,
       isSystem: true,
     };
-    this.server.to(roomId).emit('send_message', systemMessage);
+
+    this.server.to(roomId).emit('receive_message', systemMessage);
+
     return {
       success: true,
       message: 'room created',
@@ -113,14 +118,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.data.user.sub,
       enterRoomDto,
     );
-    socket.join(room._id.toString());
+
+    await socket.join(room._id.toString());
+
     const systemMessage = {
+      id: uuidv4(),
       roomId: enterRoomDto._id.toString(),
       senderId: 'System',
+      nickname: 'System',
       message: `${socket.data.user.nickname}님이 채팅방에 참가했습니다.`,
       isSystem: true,
     };
-    this.server.to(room._id.toString()).emit('send_message', systemMessage);
+    this.server.to(room._id.toString()).emit('receive_message', systemMessage);
+
+    return {
+      success: true,
+      data: room,
+    };
   }
 
   @SubscribeMessage('send_message')
@@ -134,6 +148,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // );
     const messageForm = {
       ...createMessageDto,
+      nickname: socket.data.user.nickname,
       sender_id: socket.data.user.sub,
       id: uuidv4(),
     };
@@ -160,8 +175,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (result) {
         socket.leave(roomId);
         const systemMessage = {
+          id: uuidv4(),
           roomId,
-          senderId: 'System',
+          sender_id: 'System',
           message: `${socket.data.user.nickname}님이 채팅방을 나갔습니다.`,
           isSystem: true,
         };

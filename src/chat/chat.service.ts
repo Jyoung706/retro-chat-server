@@ -58,14 +58,6 @@ export class ChatService {
       throw new BadRequestException('Not Exist Room');
     }
 
-    const isAlreadyParticipants = room.participants.some(
-      (participants) => participants.user.toString() === userId,
-    );
-
-    if (isAlreadyParticipants) {
-      throw new BadRequestException('User is already in this room');
-    }
-
     if (!room.isPublic) {
       if (!enterRoomDto.password || enterRoomDto.password !== room.password) {
         throw new UnauthorizedException('Invalid password');

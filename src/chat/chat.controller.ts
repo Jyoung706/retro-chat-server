@@ -29,7 +29,6 @@ export class ChatController {
     @Body() chatRoomData: CreateChatDto,
   ) {
     const room = await this.chatService.createChatRoom(user.sub, chatRoomData);
-    await this.chatGateway.handleRoomJoin(user, room._id.toString());
     return room;
   }
 
@@ -52,7 +51,6 @@ export class ChatController {
     @Body() enterRoomDto: EnterRoomDto,
   ) {
     const enterRoom = await this.chatService.enterRoom(user.sub, enterRoomDto);
-    await this.chatGateway.handleRoomJoin(user, enterRoom._id.toString());
     return enterRoom;
   }
 }
