@@ -31,9 +31,10 @@ export class ChatService {
     const newChatRoom = new this.chatRoomModel({
       creator_id: creatorId,
       ...createChatDto,
-      participants: [{ user: creatorId, joinedAt: Date.now() }],
+      participants: [],
     });
-    return (await newChatRoom.save()).toObject();
+    const room = (await newChatRoom.save()).toObject();
+    return room;
   }
 
   async getChatRoomList(
@@ -51,10 +52,7 @@ export class ChatService {
     return roomList;
   }
 
-  async enterRoom(
-    userId: string,
-    enterRoomDto: EnterRoomDto,
-  ): Promise<Partial<ChatRoomModel>> {
+  async IsRoomCheck(enterRoomDto: EnterRoomDto) {
     const room = await this.checkRoomExist(enterRoomDto._id.toString());
 
     if (!room) {
@@ -67,6 +65,13 @@ export class ChatService {
       }
     }
 
+    return room;
+  }
+
+  async enterRoom(
+    userId: string,
+    enterRoomDto: EnterRoomDto,
+  ): Promise<Partial<ChatRoomModel>> {
     const updateRoom = this.chatRoomModel.findByIdAndUpdate(
       enterRoomDto._id,
       {

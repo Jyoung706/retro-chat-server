@@ -47,6 +47,11 @@ export class ChatController {
     return await this.chatService.roomDetail(roomId);
   }
 
+  @Post('room/check')
+  async roomCheck(@Body() enterRoomDto: EnterRoomDto) {
+    return await this.chatService.IsRoomCheck(enterRoomDto);
+  }
+
   @Post('room/enter')
   async enterRoom(
     @User() user: TokenPayload,
