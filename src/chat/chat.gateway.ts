@@ -154,7 +154,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       sender_id: socket.data.user.sub,
       id: uuidv4(),
     };
-    socket
+    this.server
       .to(messageForm.room_id.toString())
       .emit('receive_message', messageForm);
 
