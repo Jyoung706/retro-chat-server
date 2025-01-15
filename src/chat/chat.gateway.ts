@@ -112,6 +112,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       message: `${socket.data.user.nickname}님이 채팅방에 참가했습니다.`,
       isSystem: true,
     };
+
+    this.server.emit('participants_change', {
+      type: 'join',
+      _id: enterRoomDto._id.toString(),
+      participants: socket.data.user.sub,
+    });
+
     this.server.to(room._id.toString()).emit('receive_message', systemMessage);
 
     return {
@@ -167,6 +174,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           isSystem: true,
         };
         this.server.to(roomId).emit('receive_message', systemMessage);
+        this.server.emit('participants_change', {
+          type: 'leave',
+          _id: roomId,
+          participants: socket.data.user.sub,
+        });
       } else {
         return;
       }
