@@ -30,6 +30,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { v4 as uuidv4 } from 'uuid';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ChatRoomModel } from 'src/schemas/chat-room.schema';
+import { SystemMessage } from './interface/SystemMessage.interface';
 
 @UsePipes(new ValidationPipe(validationOption))
 @UseFilters(SocketExceptionFilter)
@@ -90,27 +91,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return await this.cacheManager.get(userId);
   }
 
-  async handleRoomJoin(user: TokenPayload, roomId: string) {
-    const socketId = await this.getSocketId(user.sub);
-    this.server.in(socketId).socketsJoin(roomId);
-
-    const systemMessage = {
-      id: uuidv4(),
-      roomId,
-      senderId: 'System',
-      nickname: 'System',
-      message: `${user.nickname} 님이 채팅방에 참가했습니다.`,
-      isSystem: true,
-    };
-
-    this.server.to(roomId).emit('receive_message', systemMessage);
-
-    return {
-      success: true,
-      message: 'room created',
-    };
-  }
-
   @SubscribeMessage('enter_room')
   async enterRoom(
     @MessageBody() enterRoomDto: EnterRoomDto,
@@ -123,10 +103,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await socket.join(room._id.toString());
 
-    const systemMessage = {
+    const systemMessage: SystemMessage = {
       id: uuidv4(),
       roomId: enterRoomDto._id.toString(),
-      senderId: 'System',
+      type: 'join',
+      sender_id: 'System',
       nickname: 'System',
       message: `${socket.data.user.nickname}님이 채팅방에 참가했습니다.`,
       isSystem: true,
@@ -176,10 +157,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
       if (result) {
         socket.leave(roomId);
-        const systemMessage = {
+        const systemMessage: SystemMessage = {
           id: uuidv4(),
+          type: 'leave',
           roomId,
           sender_id: 'System',
+          nickname: 'System',
           message: `${socket.data.user.nickname}님이 채팅방을 나갔습니다.`,
           isSystem: true,
         };
@@ -190,6 +173,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (e) {
       this.logger.error(e);
     }
+  }
+
+  @OnEvent('room_join')
+  async handleRoomJoin(user: TokenPayload, roomId: string) {
+    const socketId = await this.getSocketId(user.sub);
+    this.server.in(socketId).socketsJoin(roomId);
+
+    const systemMessage: SystemMessage = {
+      id: uuidv4(),
+      roomId,
+      type: 'join',
+      sender_id: 'System',
+      nickname: 'System',
+      message: `${user.nickname} 님이 채팅방에 참가했습니다.`,
+      isSystem: true,
+    };
+
+    this.server.to(roomId).emit('receive_message', systemMessage);
+
+    return {
+      success: true,
+      message: 'room created',
+    };
   }
 
   @OnEvent('room_created')
