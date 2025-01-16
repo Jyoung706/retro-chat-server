@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: prod.Dockerfile
+    ports:
+      - ${PORT}:${PORT}
+    env_file:
+      - .env.production
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: always
+
+  mongodb:
+    image: mongo:latest
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+volumes:
+  mongodb_data:
