@@ -21,7 +21,6 @@ COPY package*.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production
 
 COPY --from=builder /usr/src/app/dist ./dist
-COPY .env.production ./.env
 COPY ecosystem.config.js .
 
 USER node

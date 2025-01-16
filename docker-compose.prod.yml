@@ -4,9 +4,7 @@ services:
       context: .
       dockerfile: prod.Dockerfile
     ports:
-      - ${PORT}:${PORT}
-    env_file:
-      - .env.production
+      - 3001:3001
     depends_on:
       mongodb:
         condition: service_healthy
