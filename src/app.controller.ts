@@ -8,9 +8,8 @@ import { UserModel } from './schemas/user.schema';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Get()
-  getHello(@User() user: UserModel): string {
-    return this.appService.getHello();
+  @Get('/health')
+  healthCheck() {
+    return { status: 'OK', message: 'Service is healthy' };
   }
 }
